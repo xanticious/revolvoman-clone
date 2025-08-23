@@ -1,24 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function WelcomePage() {
   const [isVisible, setIsVisible] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     // Trigger animation after component mounts
     setIsVisible(true);
 
-    // Auto-advance after 5 seconds to main menu
+    // Auto-advance after 3 seconds (for now, later this will go to profile selection)
     const timer = setTimeout(() => {
-      console.log('Auto-advancing to main menu...');
-      router.push('/main-menu');
-    }, 5000);
+      console.log('Auto-advancing from welcome page...');
+      // TODO: Navigate to profile selection
+    }, 3000);
 
     return () => clearTimeout(timer);
-  }, [router]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-400 via-purple-500 to-cyan-400 flex items-center justify-center">
