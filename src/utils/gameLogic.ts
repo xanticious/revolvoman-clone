@@ -33,39 +33,62 @@ export function canPlayerMove(
   return isValidPosition(newPos) && !isPositionBlocked(newPos, blocks);
 }
 
-export function rotatePosition(pos: Position, rotation: number): Position {
-  const centerX = Math.floor(GRID_SIZE / 2);
-  const centerY = Math.floor(GRID_SIZE / 2);
-
-  // Translate to origin
-  const x = pos.x - centerX;
-  const y = pos.y - centerY;
-
-  // Apply rotation (rotation is in degrees: 0, 90, 180, 270)
-  const radians = (rotation * Math.PI) / 180;
-  const cos = Math.cos(radians);
-  const sin = Math.sin(radians);
-
-  const newX = Math.round(x * cos - y * sin);
-  const newY = Math.round(x * sin + y * cos);
-
-  // Translate back
-  return {
-    x: newX + centerX,
-    y: newY + centerY,
-  };
+export function getMovementDirection(
+  direction: 'left' | 'right',
+  orientation: BoardOrientation
+): Position {
+  switch (direction) {
+    case 'left': {
+      switch (orientation) {
+        case 'NORTH':
+          return { x: -1, y: 0 };
+        case 'EAST':
+          return { x: 0, y: 1 };
+        case 'SOUTH':
+          return { x: 1, y: 0 };
+        case 'WEST':
+          return { x: 0, y: -1 };
+      }
+    }
+    case 'right': {
+      switch (orientation) {
+        case 'NORTH':
+          return { x: 1, y: 0 };
+        case 'EAST':
+          return { x: 0, y: -1 };
+        case 'SOUTH':
+          return { x: -1, y: 0 };
+        case 'WEST':
+          return { x: 0, y: 1 };
+      }
+    }
+  }
 }
 
-export function rotateBoardElements(
-  blocks: Position[],
-  coins: Position[],
+export function canPlayerMoveWithOrientation(
   playerPos: Position,
-  rotation: number
-): { blocks: Position[]; coins: Position[]; playerPosition: Position } {
+  direction: 'left' | 'right',
+  blocks: Position[],
+  orientation: BoardOrientation
+): boolean {
+  const moveDir = getMovementDirection(direction, orientation);
+  const newPos = {
+    x: playerPos.x + moveDir.x,
+    y: playerPos.y + moveDir.y,
+  };
+
+  return isValidPosition(newPos) && !isPositionBlocked(newPos, blocks);
+}
+
+export function applyMovementWithOrientation(
+  playerPos: Position,
+  direction: 'left' | 'right',
+  orientation: BoardOrientation
+): Position {
+  const moveDir = getMovementDirection(direction, orientation);
   return {
-    blocks: blocks.map((block) => rotatePosition(block, rotation)),
-    coins: coins.map((coin) => rotatePosition(coin, rotation)),
-    playerPosition: rotatePosition(playerPos, rotation),
+    x: playerPos.x + moveDir.x,
+    y: playerPos.y + moveDir.y,
   };
 }
 

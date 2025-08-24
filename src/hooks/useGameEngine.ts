@@ -1,8 +1,8 @@
 import { useReducer, useEffect, useCallback } from 'react';
 import { GameState, GameAction, Level, GAME_DURATION } from '../types/game';
 import {
-  canPlayerMove,
-  rotateBoardElements,
+  canPlayerMoveWithOrientation,
+  applyMovementWithOrientation,
   checkCoinCollection,
   getOrientationFromRotation,
   isPlayerGroundedWithOrientation,
@@ -73,11 +73,19 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         return state;
       }
 
-      if (canPlayerMove(state.playerPosition, 'left', state.blocks)) {
-        const newPosition = {
-          x: state.playerPosition.x - 1,
-          y: state.playerPosition.y,
-        };
+      if (
+        canPlayerMoveWithOrientation(
+          state.playerPosition,
+          'left',
+          state.blocks,
+          state.boardOrientation
+        )
+      ) {
+        const newPosition = applyMovementWithOrientation(
+          state.playerPosition,
+          'left',
+          state.boardOrientation
+        );
         const remainingCoins = checkCoinCollection(newPosition, state.coins);
 
         return {
@@ -99,11 +107,19 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         return state;
       }
 
-      if (canPlayerMove(state.playerPosition, 'right', state.blocks)) {
-        const newPosition = {
-          x: state.playerPosition.x + 1,
-          y: state.playerPosition.y,
-        };
+      if (
+        canPlayerMoveWithOrientation(
+          state.playerPosition,
+          'right',
+          state.blocks,
+          state.boardOrientation
+        )
+      ) {
+        const newPosition = applyMovementWithOrientation(
+          state.playerPosition,
+          'right',
+          state.boardOrientation
+        );
         const remainingCoins = checkCoinCollection(newPosition, state.coins);
 
         return {
@@ -157,14 +173,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const newProgress = Math.min(1, state.rotationProgress + 0.2); // 5 steps for smooth animation
 
       if (newProgress >= 1) {
-        // Animation complete - apply the actual rotation
-        const rotatedElements = rotateBoardElements(
-          state.blocks,
-          state.coins,
-          state.playerPosition,
-          state.rotationDirection
-        );
-
+        // Animation complete - only update rotation, don't rotate positions
         const newBoardRotation =
           (state.boardRotation + state.rotationDirection + 360) % 360;
         const newBoardOrientation =
@@ -174,9 +183,6 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           ...state,
           boardRotation: newBoardRotation,
           boardOrientation: newBoardOrientation,
-          blocks: rotatedElements.blocks,
-          coins: rotatedElements.coins,
-          playerPosition: rotatedElements.playerPosition,
           isRotating: false,
           rotationDirection: 0,
           rotationProgress: 0,

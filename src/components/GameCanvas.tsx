@@ -58,12 +58,16 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
       ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
       ctx.fill();
 
-      // Draw cent symbol
+      // Draw cent symbol with counter-rotation to keep it upright
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate((-currentRotation * Math.PI) / 180); // Counter-rotate
       ctx.fillStyle = '#B8860B'; // Dark gold
       ctx.font = '12px Arial';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('¢', centerX, centerY);
+      ctx.fillText('¢', 0, 0);
+      ctx.restore();
       ctx.fillStyle = '#FFD700'; // Reset to gold
     });
 
@@ -71,38 +75,53 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
     const playerX = gameState.playerPosition.x * CELL_SIZE + CELL_SIZE / 2;
     const playerY = gameState.playerPosition.y * CELL_SIZE + CELL_SIZE / 2;
 
+    // Apply counter-rotation to keep player upright
+    ctx.save();
+    ctx.translate(playerX, playerY);
+    ctx.rotate((-currentRotation * Math.PI) / 180); // Counter-rotate
+
     // Player body (simple square for now)
     ctx.fillStyle = gameState.isPlayerFalling ? '#FF6B6B' : '#4ECDC4'; // Red when falling, teal when grounded
     ctx.fillRect(
-      playerX - CELL_SIZE / 3,
-      playerY - CELL_SIZE / 3,
+      -CELL_SIZE / 3,
+      -CELL_SIZE / 3,
       (CELL_SIZE / 3) * 2,
       (CELL_SIZE / 3) * 2
     );
 
     // Player face
     ctx.fillStyle = '#2C3E50'; // Dark blue
-    ctx.fillRect(playerX - 3, playerY - 3, 6, 6);
+    ctx.fillRect(-3, -3, 6, 6);
 
     // Mining pick (simple line)
     ctx.strokeStyle = '#8B4513'; // Brown
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(playerX + 8, playerY - 8);
-    ctx.lineTo(playerX + 15, playerY - 15);
+    ctx.moveTo(8, -8);
+    ctx.lineTo(15, -15);
     ctx.stroke();
+
+    ctx.restore();
   }, [gameState]);
 
   // Calculate rotation for smooth animation
-  const currentRotation = gameState.isRotating
-    ? gameState.boardRotation +
-      gameState.rotationDirection * gameState.rotationProgress
-    : gameState.boardRotation;
+  let currentRotation = gameState.boardRotation;
+
+  if (gameState.isRotating) {
+    // Calculate the target rotation without wrapping
+    currentRotation =
+      gameState.boardRotation +
+      gameState.rotationDirection * gameState.rotationProgress;
+  }
 
   return (
     <div className="flex justify-center">
       <div
-        className="transition-transform duration-100"
+        className={
+          gameState.isRotating
+            ? 'transition-transform duration-100'
+            : 'transition-transform duration-0'
+        }
         style={{
           transform: `rotate(${currentRotation}deg)`,
           transformOrigin: 'center center',
