@@ -10,13 +10,13 @@ export default function MainMenuPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-400 via-purple-500 to-cyan-400 flex items-center justify-center">
+    <div className="min-h-screen bg-black flex items-center justify-center">
       <div className="text-center">
         {/* Main Title */}
         <h1
-          className="text-5xl md:text-7xl font-bold text-white mb-16"
+          className="text-5xl md:text-7xl font-bold text-cyan-400 mb-16"
           style={{
-            textShadow: '4px 4px 8px rgba(0, 0, 0, 0.3)',
+            textShadow: '0 0 2px #00FFFF, 0 0 40px #00FFFF',
             fontFamily: 'Arial Black, sans-serif',
           }}
         >
@@ -26,16 +26,16 @@ export default function MainMenuPage() {
         {/* Simple Play Button */}
         <button
           onClick={handlePlayClick}
-          className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-6 px-12 rounded-full text-2xl shadow-lg transform hover:scale-105 transition-all duration-200"
+          className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-6 px-12 rounded text-2xl shadow-lg transform hover:scale-105 transition-all duration-200 border-2 border-yellow-300"
           style={{
-            boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
+            boxShadow: '0 0 20px rgba(255, 255, 0, 0.5)',
           }}
         >
           PLAY
         </button>
 
         {/* Coming Soon indicators */}
-        <div className="mt-12 text-white/70 text-sm">
+        <div className="mt-12 text-cyan-300 text-sm">
           <p>Phase 1: Core Mechanics</p>
           <p>Campaign Level 1 Ready</p>
         </div>

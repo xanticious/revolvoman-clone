@@ -17,38 +17,28 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear canvas
-    ctx.fillStyle = '#f0f0f0';
+    // Clear canvas with black background
+    ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-    // Draw grid
-    ctx.strokeStyle = '#ddd';
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= GRID_SIZE; i++) {
-      ctx.beginPath();
-      ctx.moveTo(i * CELL_SIZE, 0);
-      ctx.lineTo(i * CELL_SIZE, CANVAS_SIZE);
-      ctx.stroke();
+    // Draw border only (no internal grid lines)
+    ctx.strokeStyle = '#00FFFF'; // Bright cyan border
+    ctx.lineWidth = 3;
+    ctx.strokeRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-      ctx.beginPath();
-      ctx.moveTo(0, i * CELL_SIZE);
-      ctx.lineTo(CANVAS_SIZE, i * CELL_SIZE);
-      ctx.stroke();
-    }
-
-    // Draw blocks
-    ctx.fillStyle = '#87CEEB'; // Light blue
+    // Draw blocks - full cell, bold blue color
+    ctx.fillStyle = '#0066FF'; // Bold blue
     gameState.blocks.forEach((block) => {
       ctx.fillRect(
-        block.x * CELL_SIZE + 1,
-        block.y * CELL_SIZE + 1,
-        CELL_SIZE - 2,
-        CELL_SIZE - 2
+        block.x * CELL_SIZE,
+        block.y * CELL_SIZE,
+        CELL_SIZE,
+        CELL_SIZE
       );
     });
 
-    // Draw coins
-    ctx.fillStyle = '#FFD700'; // Gold
+    // Draw coins - bright gold
+    ctx.fillStyle = '#FFD700'; // Bright gold
     gameState.coins.forEach((coin) => {
       const centerX = coin.x * CELL_SIZE + CELL_SIZE / 2;
       const centerY = coin.y * CELL_SIZE + CELL_SIZE / 2;
@@ -63,7 +53,7 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
       ctx.translate(centerX, centerY);
       ctx.rotate((-currentRotation * Math.PI) / 180); // Counter-rotate
       ctx.fillStyle = '#B8860B'; // Dark gold
-      ctx.font = '12px Arial';
+      ctx.font = 'bold 14px Arial';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('¢', 0, 0);
@@ -80,8 +70,8 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
     ctx.translate(playerX, playerY);
     ctx.rotate((-currentRotation * Math.PI) / 180); // Counter-rotate
 
-    // Player body (simple square for now)
-    ctx.fillStyle = gameState.isPlayerFalling ? '#FF6B6B' : '#4ECDC4'; // Red when falling, teal when grounded
+    // Player body - bright colors
+    ctx.fillStyle = gameState.isPlayerFalling ? '#FF0040' : '#00FF80'; // Bright red when falling, bright green when grounded
     ctx.fillRect(
       -CELL_SIZE / 3,
       -CELL_SIZE / 3,
@@ -89,13 +79,13 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
       (CELL_SIZE / 3) * 2
     );
 
-    // Player face
-    ctx.fillStyle = '#2C3E50'; // Dark blue
-    ctx.fillRect(-3, -3, 6, 6);
+    // Player face - bright white
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(-4, -4, 8, 8);
 
-    // Mining pick (simple line)
-    ctx.strokeStyle = '#8B4513'; // Brown
-    ctx.lineWidth = 2;
+    // Mining pick - bright yellow
+    ctx.strokeStyle = '#FFFF00'; // Bright yellow
+    ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(8, -8);
     ctx.lineTo(15, -15);
@@ -131,7 +121,7 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
           ref={canvasRef}
           width={CANVAS_SIZE}
           height={CANVAS_SIZE}
-          className="border-2 border-gray-400 bg-white"
+          className="border-4 border-cyan-400 bg-black"
           style={{ imageRendering: 'pixelated' }}
         />
       </div>

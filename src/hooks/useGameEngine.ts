@@ -53,7 +53,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         timeRemaining: GAME_DURATION,
         isLevelComplete: false,
         isGameOver: false,
-        isGameRunning: true,
+        isGameRunning: false, // Changed to false to trigger countdown
         boardRotation: 0,
         boardOrientation: 'NORTH',
         isRotating: false,
@@ -196,7 +196,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case 'TICK':
-      if (!state.isGameRunning) {
+      if (!state.isGameRunning || state.isLevelComplete) {
         return state;
       }
 
