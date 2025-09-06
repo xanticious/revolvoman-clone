@@ -224,6 +224,9 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         isPlayerFalling: false,
         isPlayerGrounded: false,
         isPlayerAtTerminalVelocity: false,
+        precisionStartTime: null,
+        precisionEndTime: null,
+        completionTime: null,
       };
 
     case 'START_GAME':
@@ -231,6 +234,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         isGameRunning: true,
         timeRemaining: GAME_DURATION,
+      };
+
+    case 'START_PRECISION_TIMER':
+      return {
+        ...state,
+        precisionStartTime: performance.now(),
+        precisionEndTime: null,
+        completionTime: null,
       };
 
     case 'PAUSE_GAME':
@@ -261,6 +272,9 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         isPlayerFalling: false,
         isPlayerGrounded: false,
         isPlayerAtTerminalVelocity: false,
+        precisionStartTime: null,
+        precisionEndTime: null,
+        completionTime: null,
       };
 
     case 'MOVE_LEFT':
@@ -287,12 +301,28 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           state.boardOrientation
         );
         const remainingCoins = checkCoinCollection(newPosition, state.coins);
+        const isLevelComplete = remainingCoins.length === 0;
+
+        // Calculate completion time if level is completed and we have a start time
+        let precisionEndTime = state.precisionEndTime;
+        let completionTime = state.completionTime;
+
+        if (
+          isLevelComplete &&
+          state.precisionStartTime &&
+          !state.precisionEndTime
+        ) {
+          precisionEndTime = performance.now();
+          completionTime = precisionEndTime - state.precisionStartTime;
+        }
 
         return {
           ...state,
           playerPosition: newPosition,
           coins: remainingCoins,
-          isLevelComplete: remainingCoins.length === 0,
+          isLevelComplete,
+          precisionEndTime,
+          completionTime,
           playerVelocity: { x: 0, y: 0 }, // Reset velocity on horizontal movement
         };
       }
@@ -322,12 +352,28 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           state.boardOrientation
         );
         const remainingCoins = checkCoinCollection(newPosition, state.coins);
+        const isLevelComplete = remainingCoins.length === 0;
+
+        // Calculate completion time if level is completed and we have a start time
+        let precisionEndTime = state.precisionEndTime;
+        let completionTime = state.completionTime;
+
+        if (
+          isLevelComplete &&
+          state.precisionStartTime &&
+          !state.precisionEndTime
+        ) {
+          precisionEndTime = performance.now();
+          completionTime = precisionEndTime - state.precisionStartTime;
+        }
 
         return {
           ...state,
           playerPosition: newPosition,
           coins: remainingCoins,
-          isLevelComplete: remainingCoins.length === 0,
+          isLevelComplete,
+          precisionEndTime,
+          completionTime,
           playerVelocity: { x: 0, y: 0 }, // Reset velocity on horizontal movement
         };
       }
@@ -476,6 +522,21 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         state.coins
       );
 
+      const isLevelComplete = remainingCoins.length === 0;
+
+      // Calculate completion time if level is completed and we have a start time
+      let precisionEndTime = state.precisionEndTime;
+      let completionTime = state.completionTime;
+
+      if (
+        isLevelComplete &&
+        state.precisionStartTime &&
+        !state.precisionEndTime
+      ) {
+        precisionEndTime = performance.now();
+        completionTime = precisionEndTime - state.precisionStartTime;
+      }
+
       return {
         ...state,
         playerPosition: newPlayerPosition,
@@ -485,7 +546,9 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         isPlayerAtTerminalVelocity: newIsPlayerAtTerminalVelocity,
         coins: remainingCoins,
         timeRemaining: newTimeRemaining,
-        isLevelComplete: remainingCoins.length === 0,
+        isLevelComplete,
+        precisionEndTime,
+        completionTime,
         isGameOver: newTimeRemaining <= 0 && remainingCoins.length > 0,
       };
 
@@ -517,6 +580,9 @@ export function useGameEngine(level: Level) {
     isGameRunning: false,
     isLevelComplete: false,
     isGameOver: false,
+    precisionStartTime: null,
+    precisionEndTime: null,
+    completionTime: null,
   };
 
   const [gameState, dispatch] = useReducer(gameReducer, initialState);
@@ -578,11 +644,16 @@ export function useGameEngine(level: Level) {
     dispatch({ type: 'RESTART' });
   }, []);
 
+  const startPrecisionTimer = useCallback(() => {
+    dispatch({ type: 'START_PRECISION_TIMER' });
+  }, []);
+
   return {
     gameState,
     startGame,
     pauseGame,
     restartGame,
+    startPrecisionTimer,
     dispatch,
   };
 }

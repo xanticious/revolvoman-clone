@@ -28,6 +28,10 @@ export interface GameState {
   isGameRunning: boolean;
   isLevelComplete: boolean;
   isGameOver: boolean;
+  // Precision timing for best times/medals
+  precisionStartTime: number | null; // performance.now() when level actually starts
+  precisionEndTime: number | null; // performance.now() when last coin is collected
+  completionTime: number | null; // calculated time in milliseconds
 }
 
 export interface Level {
@@ -46,6 +50,7 @@ export type GameAction =
   | { type: 'RESTART' }
   | { type: 'TICK' }
   | { type: 'START_GAME' }
+  | { type: 'START_PRECISION_TIMER' } // Called when actual gameplay begins
   | { type: 'PAUSE_GAME' }
   | { type: 'LOAD_LEVEL'; level: Level };
 

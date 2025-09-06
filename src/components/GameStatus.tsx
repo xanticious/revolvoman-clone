@@ -5,6 +5,7 @@ interface GameStatusProps {
     isLevelComplete: boolean;
     isGameOver: boolean;
     timeRemaining: number;
+    completionTime: number | null;
   };
   earnedMedals: string[];
   onRestartGame: () => void;
@@ -43,7 +44,11 @@ export default function GameStatus({
           LEVEL COMPLETE!
         </h3>
         <p className="text-green-300 text-sm text-center mb-4">
-          Completed in: {(20 - gameState.timeRemaining).toFixed(3)}s
+          Completed in:{' '}
+          {gameState.completionTime
+            ? (gameState.completionTime / 1000).toFixed(3)
+            : (20 - gameState.timeRemaining).toFixed(3)}
+          s
         </p>
         <div className="flex-1 flex flex-col justify-center space-y-2">
           <button

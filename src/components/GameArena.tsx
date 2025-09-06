@@ -15,6 +15,7 @@ interface GameArenaProps {
   onStartGame: () => void;
   onRestartGame: () => void;
   onPauseGame: () => void;
+  onStartPrecisionTimer?: () => void;
 }
 
 // Medal calculation utilities
@@ -58,6 +59,7 @@ export default function GameArena({
   onStartGame,
   onRestartGame,
   onPauseGame,
+  onStartPrecisionTimer,
 }: GameArenaProps) {
   const [startCountdown, setStartCountdown] = useState<number | null>(null);
   const [isInputDisabled, setIsInputDisabled] = useState(false);
@@ -89,6 +91,10 @@ export default function GameArena({
           setIsInputDisabled(false);
           setHasStarted(true);
           onStartGame();
+          // Start precision timer right after "Go!"
+          if (onStartPrecisionTimer) {
+            onStartPrecisionTimer();
+          }
         }, 1000);
 
         return () => clearTimeout(timer2);
@@ -102,6 +108,7 @@ export default function GameArena({
     gameState.isGameOver,
     hasStarted,
     onStartGame,
+    onStartPrecisionTimer,
   ]);
 
   // Reset on restart
@@ -252,6 +259,18 @@ export default function GameArena({
               <p>Time Remaining: {gameState.timeRemaining.toFixed(1)}s</p>
               <p>Game Running: {gameState.isGameRunning ? 'Yes' : 'No'}</p>
               <p>Level Complete: {gameState.isLevelComplete ? 'Yes' : 'No'}</p>
+              <p>
+                Precision Start: {gameState.precisionStartTime ? 'Set' : 'None'}
+              </p>
+              <p>
+                Precision End: {gameState.precisionEndTime ? 'Set' : 'None'}
+              </p>
+              <p>
+                Completion Time:{' '}
+                {gameState.completionTime
+                  ? `${(gameState.completionTime / 1000).toFixed(3)}s`
+                  : 'None'}
+              </p>
             </div>
           </div>
         )}

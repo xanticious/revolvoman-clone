@@ -86,6 +86,7 @@ export default function CampaignLevelClient() {
         onStartGame={gameEngine.startGame}
         onRestartGame={gameEngine.restartGame}
         onPauseGame={gameEngine.pauseGame}
+        onStartPrecisionTimer={gameEngine.startPrecisionTimer}
       />
     </div>
   );
