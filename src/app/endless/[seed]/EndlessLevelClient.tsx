@@ -42,7 +42,7 @@ export default function EndlessLevelClient() {
     ],
   };
 
-  const gameEngine = useGameEngine(level || fallbackLevel);
+  const gameEngine = useGameEngine(level || fallbackLevel, true);
 
   // Handle Enter key for restart when game over
   useEffect(() => {

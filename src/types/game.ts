@@ -28,6 +28,7 @@ export interface GameState {
   isGameRunning: boolean;
   isLevelComplete: boolean;
   isGameOver: boolean;
+  isEndlessMode: boolean; // New: disable timer in endless mode
   // Precision timing for best times/medals
   precisionStartTime: number | null; // performance.now() when level actually starts
   precisionEndTime: number | null; // performance.now() when last coin is collected

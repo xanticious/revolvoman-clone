@@ -38,13 +38,21 @@ export default function GameStatus({
         <h3 className="text-gray-300 font-bold mb-2 text-center">
           COLLECT ALL COINS!
         </h3>
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex flex-col justify-center space-y-2">
           <button
             onClick={onRestartGame}
             className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg"
           >
             Restart
           </button>
+          {isEndlessMode && (
+            <button
+              onClick={handleGoToAnotherLevel}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg"
+            >
+              Another Level
+            </button>
+          )}
         </div>
         <MedalRow earnedMedals={earnedMedals} />
       </div>

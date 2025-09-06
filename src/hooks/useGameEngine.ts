@@ -481,7 +481,11 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
       // Game logic with time-based physics
       const deltaTime = 0.016; // 16ms per frame at 60fps
-      const newTimeRemaining = Math.max(0, state.timeRemaining - deltaTime);
+
+      // Only update timer for campaign mode, not endless mode
+      const newTimeRemaining = state.isEndlessMode
+        ? state.timeRemaining
+        : Math.max(0, state.timeRemaining - deltaTime);
 
       const isGrounded = isPlayerGroundedWithOrientation(
         state.playerPosition,
@@ -548,7 +552,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         isLevelComplete,
         precisionEndTime,
         completionTime,
-        isGameOver: newTimeRemaining <= 0 && remainingCoins.length > 0,
+        isGameOver:
+          !state.isEndlessMode &&
+          newTimeRemaining <= 0 &&
+          remainingCoins.length > 0,
       };
 
     default:
@@ -556,7 +563,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
   }
 }
 
-export function useGameEngine(level: Level) {
+export function useGameEngine(level: Level, isEndlessMode: boolean = false) {
   const initialState: GameState = {
     playerPosition: level.playerStart,
     playerVelocity: { x: 0, y: 0 },
@@ -579,6 +586,7 @@ export function useGameEngine(level: Level) {
     isGameRunning: false,
     isLevelComplete: false,
     isGameOver: false,
+    isEndlessMode,
     precisionStartTime: null,
     precisionEndTime: null,
     completionTime: null,

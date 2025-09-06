@@ -39,7 +39,7 @@ export default function CampaignLevelClient() {
     ],
   };
 
-  const gameEngine = useGameEngine(level || fallbackLevel);
+  const gameEngine = useGameEngine(level || fallbackLevel, false);
 
   // Handle Enter key for restart when game over
   useEffect(() => {

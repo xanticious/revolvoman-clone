@@ -30,6 +30,7 @@ interface MobileControlsProps {
     isRotating: boolean;
     timeRemaining: number;
     isGameOver: boolean;
+    isEndlessMode: boolean;
   };
   formatTime: () => string;
   handleMobileInput: (key: string) => void;
@@ -69,20 +70,22 @@ export default function MobileControls({
           </ControlButton>
         </div>
 
-        {/* Center - Timer */}
-        <div className="flex flex-col items-center justify-end">
-          <div className="text-2xl font-bold">
-            <span
-              className={`${
-                gameState.timeRemaining <= 5 && !gameState.isGameOver
-                  ? 'text-red-400 animate-pulse'
-                  : 'text-cyan-400'
-              }`}
-            >
-              {formatTime()}
-            </span>
+        {/* Center - Timer (hidden in endless mode) */}
+        {!gameState.isEndlessMode && (
+          <div className="flex flex-col items-center justify-end">
+            <div className="text-2xl font-bold">
+              <span
+                className={`${
+                  gameState.timeRemaining <= 5 && !gameState.isGameOver
+                    ? 'text-red-400 animate-pulse'
+                    : 'text-cyan-400'
+                }`}
+              >
+                {formatTime()}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Right Controls */}
         <div className="flex space-x-4">
