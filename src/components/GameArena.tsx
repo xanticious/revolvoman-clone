@@ -239,7 +239,15 @@ export default function GameArena({
               </p>
               <p>Is Falling: {gameState.isPlayerFalling ? 'Yes' : 'No'}</p>
               <p>Is Grounded: {gameState.isPlayerGrounded ? 'Yes' : 'No'}</p>
+              <p>
+                At Terminal Velocity:{' '}
+                {gameState.isPlayerAtTerminalVelocity ? 'Yes' : 'No'}
+              </p>
               <p>Board Rotation: {gameState.boardRotation}°</p>
+              <p>
+                Player Velocity: ({gameState.playerVelocity.x.toFixed(2)},{' '}
+                {gameState.playerVelocity.y.toFixed(2)})
+              </p>
               <p>Coins Remaining: {gameState.coins.length}</p>
               <p>Time Remaining: {gameState.timeRemaining.toFixed(1)}s</p>
               <p>Game Running: {gameState.isGameRunning ? 'Yes' : 'No'}</p>

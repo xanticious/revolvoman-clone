@@ -71,10 +71,16 @@ export function canPlayerMoveWithOrientation(
   blocks: Position[],
   orientation: BoardOrientation
 ): boolean {
+  // Round current position to grid for movement calculations
+  const currentGridPos = {
+    x: Math.round(playerPos.x),
+    y: Math.round(playerPos.y),
+  };
+
   const moveDir = getMovementDirection(direction, orientation);
   const newPos = {
-    x: playerPos.x + moveDir.x,
-    y: playerPos.y + moveDir.y,
+    x: currentGridPos.x + moveDir.x,
+    y: currentGridPos.y + moveDir.y,
   };
 
   return isValidPosition(newPos) && !isPositionBlocked(newPos, blocks);
@@ -85,10 +91,16 @@ export function applyMovementWithOrientation(
   direction: 'left' | 'right',
   orientation: BoardOrientation
 ): Position {
+  // Round current position to grid and apply movement
+  const currentGridPos = {
+    x: Math.round(playerPos.x),
+    y: Math.round(playerPos.y),
+  };
+
   const moveDir = getMovementDirection(direction, orientation);
   return {
-    x: playerPos.x + moveDir.x,
-    y: playerPos.y + moveDir.y,
+    x: currentGridPos.x + moveDir.x,
+    y: currentGridPos.y + moveDir.y,
   };
 }
 
@@ -96,9 +108,11 @@ export function checkCoinCollection(
   playerPos: Position,
   coins: Position[]
 ): Position[] {
-  return coins.filter(
-    (coin) => !(coin.x === playerPos.x && coin.y === playerPos.y)
-  );
+  // Round player position to nearest grid cell for coin collection
+  const gridX = Math.round(playerPos.x);
+  const gridY = Math.round(playerPos.y);
+
+  return coins.filter((coin) => !(coin.x === gridX && coin.y === gridY));
 }
 
 export function applyGravity(
@@ -147,13 +161,74 @@ export function isPlayerGroundedWithOrientation(
   orientation: BoardOrientation
 ): boolean {
   const gravityDir = getGravityDirection(orientation);
-  const nextPos = {
-    x: playerPos.x + gravityDir.x,
-    y: playerPos.y + gravityDir.y,
-  };
 
-  // Check if next position in gravity direction is out of bounds or blocked
-  return !isValidPosition(nextPos) || isPositionBlocked(nextPos, blocks);
+  // For fractional positions, we need to check if the player is close enough to a surface
+  // that they should be considered grounded
+  const tolerance = 0.01; // Small tolerance for floating point precision
+
+  if (gravityDir.y > 0) {
+    // Gravity pointing down - check if at bottom boundary or on top of a block
+    const gridY = Math.round(playerPos.y);
+    const gridX = Math.round(playerPos.x);
+
+    // Check bottom boundary
+    if (gridY >= 14 && Math.abs(playerPos.y - 14) < tolerance) {
+      return true;
+    }
+
+    // Check if there's a block below and player is sitting on top of it
+    const belowY = gridY + 1;
+    if (belowY < 15 && isPositionBlocked({ x: gridX, y: belowY }, blocks)) {
+      return Math.abs(playerPos.y - gridY) < tolerance;
+    }
+  } else if (gravityDir.y < 0) {
+    // Gravity pointing up - check if at top boundary or below a block
+    const gridY = Math.round(playerPos.y);
+    const gridX = Math.round(playerPos.x);
+
+    // Check top boundary
+    if (gridY <= 0 && Math.abs(playerPos.y - 0) < tolerance) {
+      return true;
+    }
+
+    // Check if there's a block above and player is sitting below it
+    const aboveY = gridY - 1;
+    if (aboveY >= 0 && isPositionBlocked({ x: gridX, y: aboveY }, blocks)) {
+      return Math.abs(playerPos.y - gridY) < tolerance;
+    }
+  } else if (gravityDir.x > 0) {
+    // Gravity pointing right - check if at right boundary or left of a block
+    const gridX = Math.round(playerPos.x);
+    const gridY = Math.round(playerPos.y);
+
+    // Check right boundary
+    if (gridX >= 14 && Math.abs(playerPos.x - 14) < tolerance) {
+      return true;
+    }
+
+    // Check if there's a block to the right and player is sitting left of it
+    const rightX = gridX + 1;
+    if (rightX < 15 && isPositionBlocked({ x: rightX, y: gridY }, blocks)) {
+      return Math.abs(playerPos.x - gridX) < tolerance;
+    }
+  } else if (gravityDir.x < 0) {
+    // Gravity pointing left - check if at left boundary or right of a block
+    const gridX = Math.round(playerPos.x);
+    const gridY = Math.round(playerPos.y);
+
+    // Check left boundary
+    if (gridX <= 0 && Math.abs(playerPos.x - 0) < tolerance) {
+      return true;
+    }
+
+    // Check if there's a block to the left and player is sitting right of it
+    const leftX = gridX - 1;
+    if (leftX >= 0 && isPositionBlocked({ x: leftX, y: gridY }, blocks)) {
+      return Math.abs(playerPos.x - gridX) < tolerance;
+    }
+  }
+
+  return false;
 }
 
 export function applyGravityWithOrientation(

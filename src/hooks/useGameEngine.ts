@@ -1,13 +1,203 @@
 import { useReducer, useEffect, useCallback } from 'react';
-import { GameState, GameAction, Level, GAME_DURATION } from '../types/game';
+import {
+  GameState,
+  GameAction,
+  Level,
+  GAME_DURATION,
+  GRAVITY,
+  TERMINAL_VELOCITY,
+} from '../types/game';
 import {
   canPlayerMoveWithOrientation,
   applyMovementWithOrientation,
   checkCoinCollection,
   getOrientationFromRotation,
   isPlayerGroundedWithOrientation,
-  applyGravityWithOrientation,
+  getGravityDirection,
 } from '../utils/gameLogic';
+
+// Rotation physics constants
+const ROTATION_DURATION = 800; // Total rotation duration in milliseconds (0.4 seconds)
+const UP_JERK = 1500; // degrees/second^3 - positive jerk for acceleration phase
+const UP_JERK_DURATION = 0.5; // 50% of total duration for acceleration
+const DOWN_JERK = -1500; // degrees/second^3 - negative jerk for deceleration phase
+const DOWN_JERK_DURATION = 0.5; // 50% of total duration for deceleration
+
+// Calculate rotation position using jerk-based physics
+function calculateRotationPosition(
+  elapsedTime: number,
+  targetAngle: number
+): {
+  position: number;
+  velocity: number;
+  acceleration: number;
+  isComplete: boolean;
+} {
+  const t = elapsedTime / 1000; // Convert to seconds
+  const totalDuration = ROTATION_DURATION / 1000; // Convert to seconds
+  const upDuration = totalDuration * UP_JERK_DURATION;
+  const downDuration = totalDuration * DOWN_JERK_DURATION;
+
+  if (t >= totalDuration) {
+    return {
+      position: targetAngle,
+      velocity: 0,
+      acceleration: 0,
+      isComplete: true,
+    };
+  }
+
+  let position: number;
+  let velocity: number;
+  let acceleration: number;
+
+  if (t <= upDuration) {
+    // Acceleration phase with positive jerk
+    const jerk = UP_JERK * (targetAngle / 90); // Scale jerk based on rotation direction
+    acceleration = jerk * t;
+    velocity = 0.5 * jerk * t * t;
+    position = (1 / 6) * jerk * t * t * t;
+  } else {
+    // Deceleration phase with negative jerk
+    const t1 = upDuration;
+    const t2 = t - upDuration;
+
+    // Values at end of acceleration phase
+    const jerk1 = UP_JERK * (targetAngle / 90);
+    const acc1 = jerk1 * t1;
+    const vel1 = 0.5 * jerk1 * t1 * t1;
+    const pos1 = (1 / 6) * jerk1 * t1 * t1 * t1;
+
+    // Deceleration phase
+    const jerk2 = DOWN_JERK * (targetAngle / 90);
+    acceleration = acc1 + jerk2 * t2;
+    velocity = vel1 + acc1 * t2 + 0.5 * jerk2 * t2 * t2;
+    position =
+      pos1 + vel1 * t2 + 0.5 * acc1 * t2 * t2 + (1 / 6) * jerk2 * t2 * t2 * t2;
+  }
+
+  return {
+    position,
+    velocity,
+    acceleration,
+    isComplete: false,
+  };
+}
+
+// Apply realistic falling physics
+function applyFallingPhysics(
+  playerPos: { x: number; y: number },
+  playerVelocity: { x: number; y: number },
+  blocks: { x: number; y: number }[],
+  orientation: string,
+  deltaTime: number
+): {
+  newPosition: { x: number; y: number };
+  newVelocity: { x: number; y: number };
+  isAtTerminalVelocity: boolean;
+} {
+  const gravityDir = getGravityDirection(orientation as any);
+
+  // Calculate current velocity component in gravity direction
+  let gravityVelocity =
+    gravityDir.x !== 0
+      ? playerVelocity.x * gravityDir.x
+      : playerVelocity.y * gravityDir.y;
+
+  // Apply gravity acceleration
+  gravityVelocity += GRAVITY * deltaTime;
+
+  // Cap at terminal velocity
+  const isAtTerminalVelocity = gravityVelocity >= TERMINAL_VELOCITY;
+  if (isAtTerminalVelocity) {
+    gravityVelocity = TERMINAL_VELOCITY;
+  }
+
+  // Calculate new velocity vector
+  const newVelocity = {
+    x: gravityDir.x !== 0 ? gravityVelocity * gravityDir.x : playerVelocity.x,
+    y: gravityDir.y !== 0 ? gravityVelocity * gravityDir.y : playerVelocity.y,
+  };
+
+  // Calculate position change
+  const deltaPos = {
+    x: newVelocity.x * deltaTime,
+    y: newVelocity.y * deltaTime,
+  };
+
+  // Calculate target position with fractional coordinates
+  const targetPos = {
+    x: playerPos.x + deltaPos.x,
+    y: playerPos.y + deltaPos.y,
+  };
+
+  // Helper function to check if a grid position is blocked
+  const isBlocked = (gridX: number, gridY: number): boolean => {
+    // Check boundaries
+    if (gridX < 0 || gridX >= 15 || gridY < 0 || gridY >= 15) {
+      return true;
+    }
+    // Check blocks
+    return blocks.some((block) => block.x === gridX && block.y === gridY);
+  };
+
+  // Check collision based on movement direction
+  let collisionPos: { x: number; y: number } | null = null;
+
+  if (gravityDir.y > 0) {
+    // Falling down - check if we hit the bottom boundary or a block below
+    const belowGridY = Math.floor(targetPos.y + 1);
+    const currentGridX = Math.round(targetPos.x);
+
+    if (belowGridY >= 15 || isBlocked(currentGridX, belowGridY)) {
+      // Hit boundary or block below, stop at the top of that cell
+      collisionPos = { x: targetPos.x, y: belowGridY - 1 };
+    }
+  } else if (gravityDir.y < 0) {
+    // Falling up - check if we hit the top boundary or a block above
+    const aboveGridY = Math.ceil(targetPos.y - 1);
+    const currentGridX = Math.round(targetPos.x);
+
+    if (aboveGridY < 0 || isBlocked(currentGridX, aboveGridY)) {
+      // Hit boundary or block above, stop at the bottom of that cell
+      collisionPos = { x: targetPos.x, y: aboveGridY + 1 };
+    }
+  } else if (gravityDir.x > 0) {
+    // Falling right - check if we hit the right boundary or a block to the right
+    const rightGridX = Math.floor(targetPos.x + 1);
+    const currentGridY = Math.round(targetPos.y);
+
+    if (rightGridX >= 15 || isBlocked(rightGridX, currentGridY)) {
+      // Hit boundary or block to the right, stop at the left of that cell
+      collisionPos = { x: rightGridX - 1, y: targetPos.y };
+    }
+  } else if (gravityDir.x < 0) {
+    // Falling left - check if we hit the left boundary or a block to the left
+    const leftGridX = Math.ceil(targetPos.x - 1);
+    const currentGridY = Math.round(targetPos.y);
+
+    if (leftGridX < 0 || isBlocked(leftGridX, currentGridY)) {
+      // Hit boundary or block to the left, stop at the right of that cell
+      collisionPos = { x: leftGridX + 1, y: targetPos.y };
+    }
+  }
+
+  // If there's a collision, stop at the collision point
+  if (collisionPos) {
+    return {
+      newPosition: collisionPos,
+      newVelocity: { x: 0, y: 0 }, // Stop all velocity on collision
+      isAtTerminalVelocity: false,
+    };
+  }
+
+  // No collision, continue moving
+  return {
+    newPosition: targetPos,
+    newVelocity,
+    isAtTerminalVelocity,
+  };
+}
 
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -27,8 +217,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         isRotating: false,
         rotationDirection: 0,
         rotationProgress: 0,
+        rotationPosition: 0,
+        rotationVelocity: 0,
+        rotationAcceleration: 0,
+        rotationStartTime: 0,
         isPlayerFalling: false,
         isPlayerGrounded: false,
+        isPlayerAtTerminalVelocity: false,
       };
 
     case 'START_GAME':
@@ -59,8 +254,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         isRotating: false,
         rotationDirection: 0,
         rotationProgress: 0,
+        rotationPosition: 0,
+        rotationVelocity: 0,
+        rotationAcceleration: 0,
+        rotationStartTime: 0,
         isPlayerFalling: false,
         isPlayerGrounded: false,
+        isPlayerAtTerminalVelocity: false,
       };
 
     case 'MOVE_LEFT':
@@ -93,6 +293,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           playerPosition: newPosition,
           coins: remainingCoins,
           isLevelComplete: remainingCoins.length === 0,
+          playerVelocity: { x: 0, y: 0 }, // Reset velocity on horizontal movement
         };
       }
       return state;
@@ -127,6 +328,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           playerPosition: newPosition,
           coins: remainingCoins,
           isLevelComplete: remainingCoins.length === 0,
+          playerVelocity: { x: 0, y: 0 }, // Reset velocity on horizontal movement
         };
       }
       return state;
@@ -146,6 +348,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         isRotating: true,
         rotationDirection: -90,
         rotationProgress: 0,
+        rotationPosition: 0,
+        rotationVelocity: 0,
+        rotationAcceleration: 0,
+        rotationStartTime: Date.now(),
       };
 
     case 'ROTATE_CW':
@@ -163,6 +369,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         isRotating: true,
         rotationDirection: 90,
         rotationProgress: 0,
+        rotationPosition: 0,
+        rotationVelocity: 0,
+        rotationAcceleration: 0,
+        rotationStartTime: Date.now(),
       };
 
     case 'ROTATION_STEP':
@@ -170,10 +380,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         return state;
       }
 
-      const newProgress = Math.min(1, state.rotationProgress + 0.2); // 5 steps for smooth animation
+      const currentTime = Date.now();
+      const elapsedTime = currentTime - state.rotationStartTime;
 
-      if (newProgress >= 1) {
-        // Animation complete - only update rotation, don't rotate positions
+      const rotationPhysics = calculateRotationPosition(
+        elapsedTime,
+        state.rotationDirection
+      );
+
+      if (rotationPhysics.isComplete) {
+        // Animation complete - finalize rotation
         const newBoardRotation =
           (state.boardRotation + state.rotationDirection + 360) % 360;
         const newBoardOrientation =
@@ -186,13 +402,26 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           isRotating: false,
           rotationDirection: 0,
           rotationProgress: 0,
+          rotationPosition: 0,
+          rotationVelocity: 0,
+          rotationAcceleration: 0,
+          rotationStartTime: 0,
           isPlayerFalling: true,
+          playerVelocity: { x: 0, y: 0 }, // Reset velocity when rotation completes
+          isPlayerAtTerminalVelocity: false,
         };
       }
 
+      // Update rotation physics and progress
+      const normalizedProgress =
+        Math.abs(rotationPhysics.position) / Math.abs(state.rotationDirection);
+
       return {
         ...state,
-        rotationProgress: newProgress,
+        rotationProgress: Math.min(1, normalizedProgress),
+        rotationPosition: rotationPhysics.position,
+        rotationVelocity: rotationPhysics.velocity,
+        rotationAcceleration: rotationPhysics.acceleration,
       };
 
     case 'TICK':
@@ -200,12 +429,15 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         return state;
       }
 
-      // Handle rotation animation
+      // Handle rotation animation at 60fps
       if (state.isRotating) {
         return gameReducer(state, { type: 'ROTATION_STEP' });
       }
 
-      const newTimeRemaining = Math.max(0, state.timeRemaining - 0.1);
+      // Game logic with time-based physics
+      const deltaTime = 0.016; // 16ms per frame at 60fps
+      const newTimeRemaining = Math.max(0, state.timeRemaining - deltaTime);
+
       const isGrounded = isPlayerGroundedWithOrientation(
         state.playerPosition,
         state.blocks,
@@ -213,18 +445,29 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       );
 
       let newPlayerPosition = state.playerPosition;
+      let newPlayerVelocity = state.playerVelocity;
       let newIsPlayerFalling = state.isPlayerFalling;
+      let newIsPlayerAtTerminalVelocity = state.isPlayerAtTerminalVelocity;
 
-      // Apply gravity if player is falling
+      // Apply falling physics if player is not grounded
       if (!isGrounded) {
-        newPlayerPosition = applyGravityWithOrientation(
+        const fallingPhysics = applyFallingPhysics(
           state.playerPosition,
+          state.playerVelocity,
           state.blocks,
-          state.boardOrientation
+          state.boardOrientation,
+          deltaTime
         );
+
+        newPlayerPosition = fallingPhysics.newPosition;
+        newPlayerVelocity = fallingPhysics.newVelocity;
         newIsPlayerFalling = true;
+        newIsPlayerAtTerminalVelocity = fallingPhysics.isAtTerminalVelocity;
       } else {
+        // Player is grounded, reset falling state and velocity
         newIsPlayerFalling = false;
+        newIsPlayerAtTerminalVelocity = false;
+        newPlayerVelocity = { x: 0, y: 0 };
       }
 
       // Check coin collection after movement
@@ -236,8 +479,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         playerPosition: newPlayerPosition,
+        playerVelocity: newPlayerVelocity,
         isPlayerFalling: newIsPlayerFalling,
         isPlayerGrounded: isGrounded,
+        isPlayerAtTerminalVelocity: newIsPlayerAtTerminalVelocity,
         coins: remainingCoins,
         timeRemaining: newTimeRemaining,
         isLevelComplete: remainingCoins.length === 0,
@@ -255,11 +500,16 @@ export function useGameEngine(level: Level) {
     playerVelocity: { x: 0, y: 0 },
     isPlayerFalling: false,
     isPlayerGrounded: false,
+    isPlayerAtTerminalVelocity: false,
     boardRotation: 0,
     boardOrientation: 'NORTH',
     isRotating: false,
     rotationDirection: 0,
     rotationProgress: 0,
+    rotationPosition: 0,
+    rotationVelocity: 0,
+    rotationAcceleration: 0,
+    rotationStartTime: 0,
     coins: [...level.coins],
     blocks: [...level.blocks],
     originalLevel: level,
@@ -282,7 +532,7 @@ export function useGameEngine(level: Level) {
 
     const gameLoop = setInterval(() => {
       dispatch({ type: 'TICK' });
-    }, 100); // 10 FPS for now
+    }, 16); // ~60 FPS for smooth rotation animation
 
     return () => clearInterval(gameLoop);
   }, [gameState.isGameRunning]);

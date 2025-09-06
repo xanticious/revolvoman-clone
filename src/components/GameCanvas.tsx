@@ -70,8 +70,14 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
     ctx.translate(playerX, playerY);
     ctx.rotate((-currentRotation * Math.PI) / 180); // Counter-rotate
 
-    // Player body - bright colors
-    ctx.fillStyle = gameState.isPlayerFalling ? '#FF0040' : '#00FF80'; // Bright red when falling, bright green when grounded
+    // Player body - bright colors with terminal velocity indication
+    const playerColor = gameState.isPlayerAtTerminalVelocity
+      ? '#FF8000' // Bright orange at terminal velocity
+      : gameState.isPlayerFalling
+      ? '#FF0040' // Bright red when falling
+      : '#00FF80'; // Bright green when grounded
+
+    ctx.fillStyle = playerColor;
     ctx.fillRect(
       -CELL_SIZE / 3,
       -CELL_SIZE / 3,
@@ -94,24 +100,17 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
     ctx.restore();
   }, [gameState]);
 
-  // Calculate rotation for smooth animation
+  // Calculate smooth rotation for animation
   let currentRotation = gameState.boardRotation;
 
   if (gameState.isRotating) {
-    // Calculate the target rotation without wrapping
-    currentRotation =
-      gameState.boardRotation +
-      gameState.rotationDirection * gameState.rotationProgress;
+    // Use the smooth rotation position from physics calculation
+    currentRotation = gameState.boardRotation + gameState.rotationPosition;
   }
 
   return (
     <div className="flex justify-center">
       <div
-        className={
-          gameState.isRotating
-            ? 'transition-transform duration-100'
-            : 'transition-transform duration-0'
-        }
         style={{
           transform: `rotate(${currentRotation}deg)`,
           transformOrigin: 'center center',
