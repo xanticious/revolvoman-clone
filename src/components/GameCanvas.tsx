@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { GameState, GRID_SIZE, CELL_SIZE, CANVAS_SIZE } from '../types/game';
+import { GameState, CELL_SIZE, CANVAS_SIZE } from '../types/game';
 
 interface GameCanvasProps {
   gameState: GameState;
@@ -16,6 +16,13 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Calculate smooth rotation for animation (for canvas drawing)
+    let canvasRotation = gameState.boardRotation;
+    if (gameState.isRotating) {
+      // Use the smooth rotation position from physics calculation
+      canvasRotation = gameState.boardRotation + gameState.rotationPosition;
+    }
 
     // Clear canvas with black background
     ctx.fillStyle = '#000000';
@@ -51,7 +58,7 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
       // Draw cent symbol with counter-rotation to keep it upright
       ctx.save();
       ctx.translate(centerX, centerY);
-      ctx.rotate((-currentRotation * Math.PI) / 180); // Counter-rotate
+      ctx.rotate((-canvasRotation * Math.PI) / 180); // Counter-rotate
       ctx.fillStyle = '#B8860B'; // Dark gold
       ctx.font = 'bold 14px Arial';
       ctx.textAlign = 'center';
@@ -68,7 +75,7 @@ export default function GameCanvas({ gameState }: GameCanvasProps) {
     // Apply counter-rotation to keep player upright
     ctx.save();
     ctx.translate(playerX, playerY);
-    ctx.rotate((-currentRotation * Math.PI) / 180); // Counter-rotate
+    ctx.rotate((-canvasRotation * Math.PI) / 180); // Counter-rotate
 
     // Player body - bright colors with terminal velocity indication
     const playerColor = gameState.isPlayerAtTerminalVelocity

@@ -6,6 +6,7 @@ import {
   GAME_DURATION,
   GRAVITY,
   TERMINAL_VELOCITY,
+  BoardOrientation,
 } from '../types/game';
 import {
   canPlayerMoveWithOrientation,
@@ -21,7 +22,6 @@ const ROTATION_DURATION = 800; // Total rotation duration in milliseconds (0.4 s
 const UP_JERK = 1500; // degrees/second^3 - positive jerk for acceleration phase
 const UP_JERK_DURATION = 0.5; // 50% of total duration for acceleration
 const DOWN_JERK = -1500; // degrees/second^3 - negative jerk for deceleration phase
-const DOWN_JERK_DURATION = 0.5; // 50% of total duration for deceleration
 
 // Calculate rotation position using jerk-based physics
 function calculateRotationPosition(
@@ -36,7 +36,6 @@ function calculateRotationPosition(
   const t = elapsedTime / 1000; // Convert to seconds
   const totalDuration = ROTATION_DURATION / 1000; // Convert to seconds
   const upDuration = totalDuration * UP_JERK_DURATION;
-  const downDuration = totalDuration * DOWN_JERK_DURATION;
 
   if (t >= totalDuration) {
     return {
@@ -89,14 +88,14 @@ function applyFallingPhysics(
   playerPos: { x: number; y: number },
   playerVelocity: { x: number; y: number },
   blocks: { x: number; y: number }[],
-  orientation: string,
+  orientation: BoardOrientation,
   deltaTime: number
 ): {
   newPosition: { x: number; y: number };
   newVelocity: { x: number; y: number };
   isAtTerminalVelocity: boolean;
 } {
-  const gravityDir = getGravityDirection(orientation as any);
+  const gravityDir = getGravityDirection(orientation);
 
   // Calculate current velocity component in gravity direction
   let gravityVelocity =

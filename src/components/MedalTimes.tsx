@@ -11,7 +11,7 @@ interface MedalTimesProps {
 }
 
 export default function MedalTimes({
-  levelNumber,
+  levelNumber: _levelNumber,
   playerBestTime,
   medalTimes,
   bestMedal,

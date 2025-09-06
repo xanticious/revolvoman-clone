@@ -14,7 +14,7 @@ interface GameArenaProps {
   gameTitle: string;
   onStartGame: () => void;
   onRestartGame: () => void;
-  onPauseGame: () => void;
+  onPauseGame?: () => void;
   onStartPrecisionTimer?: () => void;
 }
 
@@ -58,7 +58,7 @@ export default function GameArena({
   gameTitle,
   onStartGame,
   onRestartGame,
-  onPauseGame,
+  onPauseGame: _onPauseGame,
   onStartPrecisionTimer,
 }: GameArenaProps) {
   const [startCountdown, setStartCountdown] = useState<number | null>(null);
