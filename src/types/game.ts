@@ -60,5 +60,5 @@ export const CANVAS_SIZE = GRID_SIZE * CELL_SIZE;
 export const GAME_DURATION = 20; // seconds
 
 // Falling physics constants
-export const GRAVITY = 15.0; // blocks per second^2
-export const TERMINAL_VELOCITY = 8.0; // blocks per second (max falling speed)
+export const GRAVITY = 40.0; // blocks per second^2
+export const TERMINAL_VELOCITY = 20.0; // blocks per second (max falling speed)
