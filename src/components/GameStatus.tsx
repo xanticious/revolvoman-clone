@@ -1,4 +1,6 @@
 import MedalRow from './MedalRow';
+import { useRouter } from 'next/navigation';
+import { generateRandomEndlessSeed } from '../utils/endlessLevelGenerator';
 
 interface GameStatusProps {
   gameState: {
@@ -9,13 +11,26 @@ interface GameStatusProps {
   };
   earnedMedals: string[];
   onRestartGame: () => void;
+  isEndlessMode?: boolean;
+  currentSeed?: string;
 }
 
 export default function GameStatus({
   gameState,
   earnedMedals,
   onRestartGame,
+  isEndlessMode = false,
+  currentSeed,
 }: GameStatusProps) {
+  const router = useRouter();
+
+  const handleGoToAnotherLevel = () => {
+    if (isEndlessMode) {
+      // Generate a new random seed and navigate to it
+      const newSeed = generateRandomEndlessSeed();
+      router.push(`/endless/${newSeed}`);
+    }
+  };
   // Neutral State
   if (!gameState.isLevelComplete && !gameState.isGameOver) {
     return (
@@ -55,16 +70,25 @@ export default function GameStatus({
             onClick={onRestartGame}
             className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm"
           >
-            Improve
+            {isEndlessMode ? 'Try Again' : 'Improve'}
           </button>
-          <button
-            onClick={() => {
-              /* TODO: Next Level */
-            }}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm"
-          >
-            Next Level
-          </button>
+          {isEndlessMode ? (
+            <button
+              onClick={handleGoToAnotherLevel}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm"
+            >
+              Another Level
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                /* TODO: Next Level */
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm"
+            >
+              Next Level
+            </button>
+          )}
         </div>
         <MedalRow earnedMedals={earnedMedals} />
       </div>
@@ -75,13 +99,21 @@ export default function GameStatus({
   return (
     <div className="bg-red-900 border border-red-400 p-4 rounded-lg h-full flex flex-col">
       <h3 className="text-red-400 font-bold mb-2 text-center">TIME UP!</h3>
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex flex-col justify-center space-y-2">
         <button
           onClick={onRestartGame}
           className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg"
         >
           Try Again
         </button>
+        {isEndlessMode && (
+          <button
+            onClick={handleGoToAnotherLevel}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg"
+          >
+            Another Level
+          </button>
+        )}
       </div>
       <MedalRow earnedMedals={earnedMedals} />
     </div>

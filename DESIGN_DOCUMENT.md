@@ -243,6 +243,8 @@ Row of buttons below game board:
 - Board rotation functionality
 - Coin collection system
 - Timer implementation
+- Campaign Level 1
+- Random Endless Mode with seeded generation
 - **Screens**: Basic game screen with minimal UI
 
 ### Phase 2: Visual Polish

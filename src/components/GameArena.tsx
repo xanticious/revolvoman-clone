@@ -16,6 +16,8 @@ interface GameArenaProps {
   onRestartGame: () => void;
   onPauseGame?: () => void;
   onStartPrecisionTimer?: () => void;
+  isEndlessMode?: boolean;
+  currentSeed?: string;
 }
 
 // Medal calculation utilities
@@ -60,6 +62,8 @@ export default function GameArena({
   onRestartGame,
   onPauseGame: _onPauseGame,
   onStartPrecisionTimer,
+  isEndlessMode = false,
+  currentSeed,
 }: GameArenaProps) {
   const [startCountdown, setStartCountdown] = useState<number | null>(null);
   const [isInputDisabled, setIsInputDisabled] = useState(false);
@@ -201,6 +205,8 @@ export default function GameArena({
                 gameState={gameState}
                 earnedMedals={earnedMedals}
                 onRestartGame={onRestartGame}
+                isEndlessMode={isEndlessMode}
+                currentSeed={currentSeed}
               />
             </div>
 

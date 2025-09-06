@@ -9,6 +9,10 @@ export default function MainMenuPage() {
     router.push('/campaign/1');
   };
 
+  const handleEndlessClick = () => {
+    router.push('/endless');
+  };
+
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
       <div className="text-center">
@@ -23,21 +27,33 @@ export default function MainMenuPage() {
           RevolvoMan Clone
         </h1>
 
-        {/* Simple Play Button */}
-        <button
-          onClick={handlePlayClick}
-          className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-6 px-12 rounded text-2xl shadow-lg transform hover:scale-105 transition-all duration-200 border-2 border-yellow-300"
-          style={{
-            boxShadow: '0 0 20px rgba(255, 255, 0, 0.5)',
-          }}
-        >
-          PLAY
-        </button>
+        {/* Game Mode Buttons */}
+        <div className="space-y-6">
+          <button
+            onClick={handlePlayClick}
+            className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-6 px-12 rounded text-2xl shadow-lg transform hover:scale-105 transition-all duration-200 border-2 border-yellow-300 block mx-auto"
+            style={{
+              boxShadow: '0 0 20px rgba(255, 255, 0, 0.5)',
+            }}
+          >
+            CAMPAIGN
+          </button>
+
+          <button
+            onClick={handleEndlessClick}
+            className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-6 px-12 rounded text-2xl shadow-lg transform hover:scale-105 transition-all duration-200 border-2 border-purple-400 block mx-auto"
+            style={{
+              boxShadow: '0 0 20px rgba(147, 51, 234, 0.5)',
+            }}
+          >
+            ENDLESS
+          </button>
+        </div>
 
         {/* Coming Soon indicators */}
         <div className="mt-12 text-cyan-300 text-sm">
           <p>Phase 1: Core Mechanics</p>
-          <p>Campaign Level 1 Ready</p>
+          <p>Campaign Level 1 & Endless Mode Ready</p>
         </div>
       </div>
     </div>
