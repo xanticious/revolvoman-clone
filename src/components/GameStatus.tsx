@@ -28,7 +28,7 @@ export default function GameStatus({
     if (isEndlessMode) {
       // Generate a new random seed and navigate to it
       const newSeed = generateRandomEndlessSeed();
-      router.push(`/endless/${newSeed}`);
+      router.push(`/endless?seed=${newSeed}`);
     }
   };
   // Neutral State
